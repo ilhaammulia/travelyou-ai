@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>LLM → Google Maps Search</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f9fafb;
+            color: #111827;
+        }
+
+        h2 {
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 2rem;
+            color: #6b7280;
+        }
+
+        /* Search bar */
+        .search-bar {
+            display: flex;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 2rem;
+            border-radius: 0.25rem;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            padding-right: 16px;
+            overflow: hidden;
+            border: 1px solid #d1d5db;
+            background: #fff;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .search-bar button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0 1.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .search-bar button:hover {
+            background: #1e40af;
+        }
+
+        /* Results grid */
+        #results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .place-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: transform 0.15s ease;
+        }
+
+        .place-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .place-card h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.1rem;
+            color: #111827;
+        }
+
+        .place-card p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+
+        .links {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .links a {
+            color: #2563eb;
+            text-decoration: none;
+            margin-right: 0.5rem;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<h2>TravelYou AI</h2>
+<p>Your best travel assistant</p>
+
+<div class="search-bar">
+    <input id="prompt" placeholder="Where to eat cheap nasi goreng near Malioboro tonight?"/>
+    <button id="go">Search</button>
+</div>
+
+<div id="results">
+</div>
+
+<script>
+    const resultsEl = document.getElementById('results');
+
+    document.getElementById('go').onclick = async () => {
+        const promptText = document.getElementById('prompt').value.trim();
+        if (!promptText) return alert("Enter a search prompt");
+
+        resultsEl.innerHTML = "<p style='text-align: center'>Searching…</p>";
+
+        try {
+            const resp = await fetch('/api/search', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({prompt: promptText})
+            });
+
+            if (!resp.ok) {
+                const txt = await resp.text();
+                throw new Error(txt);
+            }
+
+            const data = await resp.json();
+            if (data.length === 0) {
+                resultsEl.innerHTML = "<em style='text-align: center'>No places found</em>";
+                return;
+            }
+
+            resultsEl.innerHTML = "";
+            data.forEach((p) => {
+                const card = document.createElement('div');
+                card.className = 'place-card';
+                card.innerHTML = `
+            <h3>${p.name}</h3>
+            <p>${p.address || ''}</p>
+            <div class="links">
+              <p>Rating: ${p.rating}</p>
+              <a href="${p.directions_link}" target="_blank">Directions</a>
+            </div>
+          `;
+                resultsEl.appendChild(card);
+            });
+
+        } catch (e) {
+            resultsEl.innerHTML = `<pre style='color:red'>Error: ${e}</pre>`;
+        }
+    };
+</script>
+</body>
+</html>
