@@ -1,3 +1,5 @@
+![Landing Page](https://github.com/ilhaammulia/travelyou-ai/blob/master/image.png)
+
 # LLM + Google Maps Search
 
 This project demonstrates integrating a **local LLM** (via [Open WebUI](https://github.com/open-webui/open-webui)) with the **Google Maps API**.  
